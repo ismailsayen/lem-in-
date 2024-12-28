@@ -9,7 +9,10 @@ import (
 func (g *GraphData) BFS(neighborStart string) {
 	var queue [][]string
 	var currentPath []string
+	visited := make(map[string]bool)
 	queue = append(queue, []string{g.Start, neighborStart})
+	visited[g.Start] = true
+	visited[neighborStart] = true
 	for len(queue) > 0 {
 		currentPath = queue[0]
 		queue = queue[1:]
@@ -21,10 +24,13 @@ func (g *GraphData) BFS(neighborStart string) {
 		}
 
 		for _, neighbor := range g.Tunnels[lastRoom] {
-			if !slices.Contains(currentPath, neighbor) {
+			if !slices.Contains(currentPath, neighbor) && !visited[neighbor] {
 				newPath := append([]string{}, currentPath...)
 				newPath = append(newPath, neighbor)
 				queue = append(queue, newPath)
+				if neighbor != g.End {
+					visited[neighbor] = true
+				}
 			}
 		}
 	}
