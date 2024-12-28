@@ -59,7 +59,7 @@ func (g *GraphData) ValidateFileContent(file *os.File) string {
 		if count == 0 {
 			g.NbOfAnts, err = strconv.Atoi(line)
 			if err != nil || g.NbOfAnts <= 0 || g.NbOfAnts > 10000 {
-				return "ERROR: invalid data format"
+				return "ERROR: invalid data format, invalid number of Ants"
 			}
 
 			count = 1
@@ -73,7 +73,11 @@ func (g *GraphData) ValidateFileContent(file *os.File) string {
 		room := strings.Fields(line)
 		if count == 2 || count == 3 {
 			if !utils.IsValidRoom(line) {
-				return "ERROR: invalid data format"
+				if count == 2 {
+					return "ERROR: invalid data format, invalid start room"
+				} else {
+					return "ERROR: invalid data format, invalid end room"
+				}
 			}
 			if count == 2 {
 				g.Start = room[0]
@@ -85,7 +89,7 @@ func (g *GraphData) ValidateFileContent(file *os.File) string {
 
 		if line == "##start" {
 			if g.Start != "" {
-				return "ERROR: invalid data format"
+				return "ERROR: invalid data format, Duplicated Start Room"
 			}
 			count = 2
 			continue
@@ -93,34 +97,39 @@ func (g *GraphData) ValidateFileContent(file *os.File) string {
 
 		if line == "##end" {
 			if g.End != "" {
-				return "ERROR: invalid data format"
+				return "ERROR: invalid data format, duplicated end room"
 			}
 			count = 3
 			continue
 		}
 		if !utils.IsValidRoom(line) && !utils.IsValidTunnel(line) {
-			return "ERROR: invalid data format"
+			return "ERROR: invalid data format, invalid room or tunnel"
 		}
 		if utils.IsValidRoom(line) {
 			err := g.AddRoom(line)
 			if err != nil {
-				return "ERROR: invalid data format"
+				return "ERROR: invalid data format, failed to add Room"
 			}
 			continue
 		}
 		if utils.IsValidTunnel(line) {
 			err := g.AddNeighbor(line)
 			if err != nil {
-				return "ERROR: invalid data format"
+				return "ERROR: invalid data format, failed to add tunnel"
 			}
 		}
 
 	}
 
-	if g.Start == "" || g.End == "" || g.Start == g.End {
-		return "ERROR: invalid data format"
+	if g.Start == "" {
+		return "ERROR: invalid data format, missing start room"
 	}
-
+	if g.End == "" {
+		return "ERROR: invalid data format, missing end room"
+	}
+	if g.Start == g.End {
+		return "ERROR: invalid data format, start and end rooms are identical"
+	}
 	g.Rooms = map[string][]string{}
 	// Range over the slice of neighbors to find the shortest path for each neighbor using BFS (Breadth-First Search).
 	for i := 0; i < len(g.Tunnels[g.Start]); i++ {
@@ -132,7 +141,7 @@ func (g *GraphData) ValidateFileContent(file *os.File) string {
 	}
 
 	if len(g.Paths) < 1 {
-		return "ERROR: invalid data format"
+		return "ERROR: invalid data format, no valid paths found"
 	}
 
 	g.GroupMaker()
@@ -163,7 +172,7 @@ func (g *GraphData) ValidateFileContent(file *os.File) string {
 func (g *GraphData) AddRoom(line string) error {
 	room := strings.Fields(line)
 	if _, exist := g.Rooms[room[0]]; exist {
-		return errors.New("ERROR: invalid data format")
+		return errors.New("ERROR: invalid data format, room already exists")
 	}
 
 	g.Rooms[room[0]] = append(g.Rooms[room[0]], room[1], room[2])
@@ -179,10 +188,10 @@ func (g *GraphData) AddNeighbor(line string) error {
 	tunnel := strings.Split(line, "-")
 
 	if slices.Contains(g.Tunnels[tunnel[0]], tunnel[1]) {
-		return errors.New("ERROR: invalid data format")
+		return errors.New("ERROR: invalid data format,tunnel already exists")
 	}
 	if slices.Contains(g.Tunnels[tunnel[1]], tunnel[0]) {
-		return errors.New("ERROR: invalid data format")
+		return errors.New("ERROR: invalid data format,tunnel already exists")
 	}
 	g.Tunnels[tunnel[0]] = append(g.Tunnels[tunnel[0]], tunnel[1])
 	g.Tunnels[tunnel[1]] = append(g.Tunnels[tunnel[1]], tunnel[0])

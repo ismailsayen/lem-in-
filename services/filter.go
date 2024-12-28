@@ -44,7 +44,7 @@ func (g *GraphData) FilterPaths() {
 	help := false
 
 	for _, grp := range g.Groups {
-		if grp.lenPaths == 1 {
+		if grp.lenPaths == 1 && len(g.Groups) > 1 {
 			continue
 		}
 		g.Paths = nil
