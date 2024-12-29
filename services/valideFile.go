@@ -20,8 +20,6 @@ type GraphData struct {
 	Tunnels  map[string][]string
 	Paths    []*PathInfos
 	Groups   []*Groups
-	OneAnt   [][]string
-	BadLink  bool // if start is liked with end
 }
 
 type Groups struct {
@@ -134,10 +132,6 @@ func (g *GraphData) ValidateFileContent(file *os.File) string {
 	// Range over the slice of neighbors to find the shortest path for each neighbor using BFS (Breadth-First Search).
 	for i := 0; i < len(g.Tunnels[g.Start]); i++ {
 		g.BFS(g.Tunnels[g.Start][i])
-		// I check if the start connected to the end room.
-		if g.Tunnels[g.Start][i] == g.End {
-			g.BadLink = true
-		}
 	}
 
 	if len(g.Paths) < 1 {
